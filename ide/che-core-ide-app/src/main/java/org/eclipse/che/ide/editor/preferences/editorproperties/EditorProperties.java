@@ -19,6 +19,9 @@ import javax.validation.constraints.NotNull;
  */
 public enum EditorProperties {
 
+    //AutoSave section
+    ENABLE_AUTO_SAVE("enableAutoSave"),
+
     //Tabs section
     TAB_SIZE("tabSize"),
     EXPAND_TAB("expandTab"),

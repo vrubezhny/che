@@ -15,8 +15,10 @@ import com.google.gwt.inject.client.assistedinject.GinFactoryModuleBuilder;
 import com.google.gwt.inject.client.multibindings.GinMultibinder;
 
 import org.eclipse.che.ide.api.preferences.PreferencePagePresenter;
+import org.eclipse.che.ide.editor.preferences.editorproperties.EditorPropertiesPresenter;
 import org.eclipse.che.ide.editor.preferences.editorproperties.propertiessection.EditorPropertiesSectionPresenter;
 import org.eclipse.che.ide.editor.preferences.editorproperties.sections.EditPropertiesSection;
+import org.eclipse.che.ide.editor.preferences.editorproperties.sections.AutosaveSection;
 import org.eclipse.che.ide.editor.preferences.editorproperties.sections.EditorPreferenceSectionFactory;
 import org.eclipse.che.ide.editor.preferences.editorproperties.sections.EditorPropertiesSection;
 import org.eclipse.che.ide.editor.preferences.editorproperties.sections.LanguageToolsPropertiesSection;
@@ -47,9 +49,15 @@ public class EditorPreferencesModule extends AbstractGinModule {
                         .implement(EditorPreferenceSection.class, EditorPropertiesSectionPresenter.class)
                         .build(EditorPreferenceSectionFactory.class));
 
+        GinMultibinder<EditorPreferenceSection> editorPreferenceSectionsBinder =
+                GinMultibinder.newSetBinder(binder(), EditorPreferenceSection.class);
+        editorPreferenceSectionsBinder.addBinding().to(KeyMapsPreferencePresenter.class);
+        editorPreferenceSectionsBinder.addBinding().to(EditorPropertiesPresenter.class);
+
         GinMultibinder<EditorPropertiesSection> editorPropertiesSectionBinder =
                 GinMultibinder.newSetBinder(binder(), EditorPropertiesSection.class);
 
+        editorPropertiesSectionBinder.addBinding().to(AutosaveSection.class);
         editorPropertiesSectionBinder.addBinding().to(TabsPropertiesSection.class);
         editorPropertiesSectionBinder.addBinding().to(EditPropertiesSection.class);
         editorPropertiesSectionBinder.addBinding().to(LanguageToolsPropertiesSection.class);
