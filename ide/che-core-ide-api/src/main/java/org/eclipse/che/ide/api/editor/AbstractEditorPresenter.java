@@ -15,6 +15,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 
 import org.eclipse.che.ide.api.parts.AbstractPartPresenter;
 import org.eclipse.che.ide.api.editor.EditorAgent.OpenEditorCallback;
+import org.eclipse.che.ide.util.loging.Log;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -93,6 +94,7 @@ public abstract class AbstractEditorPresenter extends AbstractPartPresenter impl
 
     @Override
     public void onClosing(AsyncCallback<Void> callback) {
+        Log.error(getClass(), "3333333333333 onClosing ");
         callback.onSuccess(null);
     }
 }

@@ -22,8 +22,8 @@ import org.eclipse.che.ide.api.editor.editorconfig.DefaultTextEditorConfiguratio
 import org.eclipse.che.ide.api.editor.formatter.ContentFormatter;
 import org.eclipse.che.ide.api.editor.partition.DocumentPartitioner;
 import org.eclipse.che.ide.api.editor.partition.DocumentPositionMap;
+import org.eclipse.che.ide.api.editor.reconciler.DefaultReconciler;
 import org.eclipse.che.ide.api.editor.reconciler.Reconciler;
-import org.eclipse.che.ide.api.editor.reconciler.ReconcilerWithAutoSave;
 import org.eclipse.che.ide.api.editor.signature.SignatureHelpProvider;
 import org.eclipse.che.plugin.languageserver.ide.editor.signature.LanguageServerSignatureHelpFactory;
 
@@ -39,7 +39,7 @@ public class LanguageServerEditorConfiguration extends DefaultTextEditorConfigur
 
     private final ServerCapabilities                       serverCapabilities;
     private final AnnotationModel                          annotationModel;
-    private final ReconcilerWithAutoSave                   reconciler;
+    private final DefaultReconciler                        reconciler;
     private final LanguageServerCodeassistProcessorFactory codeAssistProcessorFactory;
     private final SignatureHelpProvider                    signatureHelpProvider;
     private       LanguageServerFormatter                  formatter;
@@ -61,8 +61,9 @@ public class LanguageServerEditorConfiguration extends DefaultTextEditorConfigur
         this.serverCapabilities = serverCapabilities;
         this.annotationModel = annotationModelFactory.get(docPositionMapProvider.get());
 
-        this.reconciler = new ReconcilerWithAutoSave(DocumentPartitioner.DEFAULT_CONTENT_TYPE, getPartitioner());
-        reconciler.addReconcilingStrategy(DocumentPartitioner.DEFAULT_CONTENT_TYPE, reconcileStrategyProviderFactory.build(serverCapabilities));
+        this.reconciler = new DefaultReconciler(DocumentPartitioner.DEFAULT_CONTENT_TYPE, getPartitioner());
+        reconciler.addReconcilingStrategy(DocumentPartitioner.DEFAULT_CONTENT_TYPE,
+                                          reconcileStrategyProviderFactory.build(serverCapabilities));
         if (serverCapabilities.getSignatureHelpProvider() != null) {
             signatureHelpProvider = signatureHelpFactory.create(serverCapabilities);
         } else {

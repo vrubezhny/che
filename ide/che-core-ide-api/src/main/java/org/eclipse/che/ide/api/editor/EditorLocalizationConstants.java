@@ -64,6 +64,12 @@ public interface EditorLocalizationConstants extends Messages {
     @DefaultMessage("Soft Wrap")
     String propertySoftWrap();
 
+    @DefaultMessage("Enable autosave for dirty editors")
+    String propertyAutoSave();
+
+    @DefaultMessage("AutoSave:")
+    String autosaveSection();
+
     @DefaultMessage("Autopair (Parentheses)")
     String propertyAutoPairParentheses();
 

@@ -558,6 +558,14 @@ public class StandardComponentInitializer {
         actionManager.registerAction("projectConfiguration", projectConfigurationAction);
         projectGroup.add(projectConfigurationAction);
 
+        DefaultActionGroup saveGroup = new DefaultActionGroup(actionManager);
+        actionManager.registerAction("saveGroup", saveGroup);
+        actionManager.registerAction("save", saveAction);
+        actionManager.registerAction("saveAll", saveAllAction);
+        saveGroup.addSeparator();
+        saveGroup.add(saveAction);
+        saveGroup.add(saveAllAction);
+
         // Edit (New Menu)
         DefaultActionGroup editGroup = (DefaultActionGroup)actionManager.getAction(GROUP_EDIT);
         DefaultActionGroup recentGroup = new DefaultActionGroup(RECENT_GROUP_ID, true, actionManager);
@@ -569,7 +577,7 @@ public class StandardComponentInitializer {
         actionManager.registerAction(OPEN_RECENT_FILES, openRecentFilesAction);
         editGroup.add(openRecentFilesAction);
 
-        editGroup.addSeparator();
+        editGroup.add(saveGroup);
 
         actionManager.registerAction(CLOSE_ACTIVE_EDITOR, closeActiveEditorAction);
         editGroup.add(closeActiveEditorAction);
@@ -629,15 +637,6 @@ public class StandardComponentInitializer {
         actionManager.registerAction(NAVIGATE_TO_FILE, navigateToFileAction);
         assistantGroup.add(navigateToFileAction);
 
-        // Compose Save group
-        DefaultActionGroup saveGroup = new DefaultActionGroup(actionManager);
-        actionManager.registerAction("saveGroup", saveGroup);
-        actionManager.registerAction("save", saveAction);
-        actionManager.registerAction("saveAll", saveAllAction);
-        saveGroup.addSeparator();
-        saveGroup.add(saveAction);
-        saveGroup.add(saveAllAction);
-
         //Compose Profile menu
         DefaultActionGroup profileGroup = (DefaultActionGroup)actionManager.getAction(GROUP_PROFILE);
         actionManager.registerAction("showPreferences", showPreferencesAction);
@@ -653,7 +652,7 @@ public class StandardComponentInitializer {
         actionManager.registerAction("resourceOperation", resourceOperation);
         actionManager.registerAction("refreshPathAction", refreshPathAction);
         actionManager.registerAction("linkWithEditor", linkWithEditorAction);
-        resourceOperation.addSeparator();
+        resourceOperation.add(saveGroup);
         resourceOperation.add(showReferenceAction);
         resourceOperation.add(goIntoAction);
         resourceOperation.add(editFileAction);
@@ -707,6 +706,7 @@ public class StandardComponentInitializer {
         DefaultActionGroup mainToolbarGroup = (DefaultActionGroup)actionManager.getAction(GROUP_MAIN_TOOLBAR);
         mainToolbarGroup.add(newGroup);
         mainToolbarGroup.add(changeResourceGroup);
+        mainToolbarGroup.add(saveGroup);
         toolbarPresenter.bindMainGroup(mainToolbarGroup);
 
         DefaultActionGroup centerToolbarGroup = (DefaultActionGroup)actionManager.getAction(GROUP_CENTER_TOOLBAR);

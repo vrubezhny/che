@@ -186,4 +186,16 @@ public class FontAwesome {
      * http://fontawesome.io/icon/arrow-down/
      */
     public static final String ARROW_DOWN = "<i class=\"fa fa-arrow-down\"></i>";
+
+    public static final String SAVE_ALL = "<i class=\"fa fa-floppy-o\" style=\"\n" +
+                                            "    position: absolute;\n" +
+                                            "    left: 5px;\n" +
+                                            "    top: 3px;\n" +
+                                            "\"></i><i class=\"fa fa-floppy-o\" style=\"\n" +
+                                            "    position: absolute;\n" +
+                                            "    left: 0px;\n" +
+                                            "    top: 0px;\n" +
+                                            "\"></i>";
+
+
 }
