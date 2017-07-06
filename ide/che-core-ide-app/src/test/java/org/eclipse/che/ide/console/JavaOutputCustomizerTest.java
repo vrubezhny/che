@@ -111,5 +111,7 @@ public class JavaOutputCustomizerTest extends BaseOutputCustomizerTest {
                 "Program.cs(2,13): error CS0234: The type or namespace name 'ppp' does not exist in the namespace 'hwapp' (are you missing an assembly reference?) [/home/jeremy/projects/csharp/hwapp/hwapp.csproj]");
         testStackTraceLine(
                 "ppp/PPPProgram.cs(9,17): warning CS0219: The variable 'testIntValue' is assigned but its value is never used [/home/jeremy/projects/csharp/hwapp/hwapp.csproj]");
+        testStackTraceLine(
+                "[STDOUT] 2017-07-06 08:58:34,647 [ForkJoinPool.commonPool-worker-3] DEBUG o.j.t.l.t.DocumentManager.findSelectedWord - Looking for word at Position 2 in 'textDocument/badWord:Warning:name:So bad! '");
     }
 }

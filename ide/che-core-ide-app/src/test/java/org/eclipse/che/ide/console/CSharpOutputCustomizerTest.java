@@ -115,5 +115,7 @@ public class CSharpOutputCustomizerTest extends BaseOutputCustomizerTest {
         testStackTraceLine(
                 "   at MyClass$ThrowInConstructor.<init>(MyClass.java:16)");
         testStackTraceLine("   ... 1 more");
+        testStackTraceLine(
+                "[STDOUT] 2017-07-06 08:58:34,647 [ForkJoinPool.commonPool-worker-3] DEBUG o.j.t.l.t.DocumentManager.findSelectedWord - Looking for word at Position 2 in 'textDocument/badWord:Warning:name:So bad! '");
     }
 }

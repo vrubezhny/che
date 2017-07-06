@@ -128,5 +128,7 @@ public class CompoundOutputCustomizerTest extends BaseOutputCustomizerTest {
     @Test
     public void testNonStackTraceLines() throws Exception {
         testStackTraceLine("[STDOUT] Listening for transport dt_socket at address: 4403");
+        testStackTraceLine(
+                "[STDOUT] 2017-07-06 08:58:34,647 [ForkJoinPool.commonPool-worker-3] DEBUG o.j.t.l.t.DocumentManager.findSelectedWord - Looking for word at Position 2 in 'textDocument/badWord:Warning:name:So bad! '");
     }
 }
