@@ -10,10 +10,13 @@
  *******************************************************************************/
 package org.eclipse.che.ide.console;
 
-import com.google.gwt.user.client.ui.AcceptsOneWidget;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
-import com.google.web.bindery.event.shared.EventBus;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_PREVIEW_URL_ATTRIBUTE_NAME;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import org.eclipse.che.api.core.model.machine.Machine;
 import org.eclipse.che.api.machine.shared.dto.MachineProcessDto;
@@ -33,15 +36,15 @@ import org.eclipse.che.ide.api.machine.ExecAgentCommandManager;
 import org.eclipse.che.ide.api.machine.events.ProcessFinishedEvent;
 import org.eclipse.che.ide.api.machine.events.ProcessStartedEvent;
 import org.eclipse.che.ide.api.macro.MacroProcessor;
+import org.eclipse.che.ide.api.outputconsole.OutputConsoleRenderer;
+import org.eclipse.che.ide.api.outputconsole.OutputConsoleRendererRegistry;
 import org.eclipse.che.ide.machine.MachineResources;
 import org.vectomatic.dom.svg.ui.SVGResource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.eclipse.che.api.workspace.shared.Constants.COMMAND_PREVIEW_URL_ATTRIBUTE_NAME;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import com.google.web.bindery.event.shared.EventBus;
 
 /**
  * Console for command output.
@@ -69,7 +72,7 @@ public class CommandOutputConsolePresenter implements CommandOutputConsole, Outp
 
     private final List<ActionDelegate> actionDelegates = new ArrayList<>();
     
-    private OutputCustomizer outputCustomizer = null;
+    private OutputConsoleRenderer outputRenderer = null;
 
     @Inject
     public CommandOutputConsolePresenter(final OutputConsoleView view,
@@ -80,6 +83,7 @@ public class CommandOutputConsolePresenter implements CommandOutputConsole, Outp
                                          ExecAgentCommandManager execAgentCommandManager,
                                          @Assisted CommandImpl command,
                                          @Assisted Machine machine,
+                                         OutputConsoleRendererRegistry rendererRegistry,
                                          AppContext appContext,
                                          EditorAgent editorAgent) {
         this.view = view;
@@ -90,11 +94,8 @@ public class CommandOutputConsolePresenter implements CommandOutputConsole, Outp
         this.eventBus = eventBus;
         this.commandExecutor = commandExecutor;
 
-        setCustomizer(new CompoundOutputCustomizer(
-                new JavaOutputCustomizer(appContext, editorAgent),
-                new CSharpOutputCustomizer(appContext, editorAgent),
-                new CPPOutputCustomizer(appContext, editorAgent)));
-        
+        initOutputConsoleRenderer(appContext, command, rendererRegistry);
+
         view.setDelegate(this);
 
         final String previewUrl = command.getAttributes().get(COMMAND_PREVIEW_URL_ATTRIBUTE_NAME);
@@ -154,9 +155,9 @@ public class CommandOutputConsolePresenter implements CommandOutputConsole, Outp
             String color = "red";
             view.print(text, carriageReturn, color);
 
-            for (ActionDelegate actionDelegate : actionDelegates) {
-                actionDelegate.onConsoleOutput(CommandOutputConsolePresenter.this);
-            }
+            actionDelegates.forEach(d -> {
+                d.onConsoleOutput(CommandOutputConsolePresenter.this);
+            });
         };
     }
 
@@ -167,9 +168,9 @@ public class CommandOutputConsolePresenter implements CommandOutputConsole, Outp
             boolean carriageReturn = stdOutMessage.endsWith("\r");
             view.print(stdOutMessage, carriageReturn);
 
-            for (ActionDelegate actionDelegate : actionDelegates) {
-                actionDelegate.onConsoleOutput(CommandOutputConsolePresenter.this);
-            }
+            actionDelegates.forEach(d -> {
+                d.onConsoleOutput(CommandOutputConsolePresenter.this);
+            });
         };
 
     }
@@ -250,9 +251,9 @@ public class CommandOutputConsolePresenter implements CommandOutputConsole, Outp
 
     @Override
     public void downloadOutputsButtonClicked() {
-        for (ActionDelegate actionDelegate : actionDelegates) {
-            actionDelegate.onDownloadOutput(this);
-        }
+        actionDelegates.forEach(d -> {
+            d.onDownloadOutput(this);
+        });
     }
 
     @Override
@@ -287,12 +288,34 @@ public class CommandOutputConsolePresenter implements CommandOutputConsole, Outp
     }
 
     @Override
-    public OutputCustomizer getCustomizer() {
-        return outputCustomizer;
+    public OutputConsoleRenderer getRenderer() {
+        return outputRenderer;
     }
 
-    /** Sets up the text output customizer */
-    public void setCustomizer(OutputCustomizer customizer) {
-        this.outputCustomizer = customizer;
+    /** Sets up the text output renderer */
+    public void setRenderer(OutputConsoleRenderer renderer) {
+        this.outputRenderer = renderer;
+    }
+    
+    /*
+     * Initializes the renderer for the console output
+     */
+    private void initOutputConsoleRenderer(AppContext appContext, CommandImpl command, OutputConsoleRendererRegistry rendererRegistry) {
+        List<OutputConsoleRenderer> renderers = new ArrayList<OutputConsoleRenderer>();
+        Set<String> commandRenderers = command.getOutputRenderers();
+        
+        if (commandRenderers != null) {
+            commandRenderers.forEach(t -> {
+                Set<OutputConsoleRenderer> appliedRenderers = rendererRegistry.getOutputRenderers(t);
+                if (appliedRenderers != null) {
+                    renderers.addAll(appliedRenderers);
+                }
+            });
+        }
+
+        CompoundOutputRenderer compoundRenderer = (renderers.size() > 0 ?  
+                new CompoundOutputRenderer(renderers.toArray(new OutputConsoleRenderer[renderers.size()])) :
+                    null);
+        setRenderer(compoundRenderer);
     }
 }

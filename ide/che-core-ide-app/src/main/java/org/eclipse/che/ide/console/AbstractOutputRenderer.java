@@ -28,6 +28,7 @@ import org.eclipse.che.ide.api.editor.document.Document;
 import org.eclipse.che.ide.api.editor.text.LinearRange;
 import org.eclipse.che.ide.api.editor.text.TextPosition;
 import org.eclipse.che.ide.api.editor.texteditor.TextEditor;
+import org.eclipse.che.ide.api.outputconsole.OutputConsoleRenderer;
 import org.eclipse.che.ide.api.resources.Container;
 import org.eclipse.che.ide.api.resources.File;
 import org.eclipse.che.ide.api.resources.Resource;
@@ -36,7 +37,7 @@ import org.eclipse.che.ide.resource.Path;
 import com.google.gwt.user.client.Timer;
 
 /**
- * Default customizer adds an anchor link to the lines that match a stack trace
+ * Default renderer adds an anchor link to the lines that match a stack trace
  * line pattern and installs a handler function for the link. The handler parses
  * the stack trace line, searches for the candidate Java files to navigate to,
  * opens the first file (of the found candidates) in editor and reveals it to
@@ -44,33 +45,39 @@ import com.google.gwt.user.client.Timer;
  * 
  * @author Victor Rubezhny
  */
-abstract public class AbstractOutputCustomizer implements OutputCustomizer {
-
+abstract public class AbstractOutputRenderer implements OutputConsoleRenderer {
+    protected String name;
     protected AppContext appContext;
     protected EditorAgent editorAgent;
 
-    public AbstractOutputCustomizer(AppContext appContext, EditorAgent editorAgent) {
+    public AbstractOutputRenderer(String name, AppContext appContext, EditorAgent editorAgent) {
+        this.name = name;
         this.appContext = appContext;
         this.editorAgent = editorAgent;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     /*
      * (non-Javadoc)
      * 
      * @see org.eclipse.che.ide.extension.machine.client.outputspanel.console.
-     * OutputCustomizer#canCustomize(java.lang.String)
+     * OutputConsoleRenderer#canRender(java.lang.String)
      */
     @Override
-    abstract public boolean canCustomize(String text);
+    abstract public boolean canRender(String text);
 
     /*
      * (non-Javadoc)
      * 
      * @see org.eclipse.che.ide.extension.machine.client.outputspanel.console.
-     * OutputCustomizer#customize(java.lang.String)
+     * OutputConsoleRenderer#render(java.lang.String)
      */
     @Override
-    abstract public String customize(String text);
+    abstract public String render(String text);
 
     /*
      * Returns the list of workspace files filtered by a relative path

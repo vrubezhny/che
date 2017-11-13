@@ -15,13 +15,18 @@ import com.google.inject.name.Named;
 
 import org.eclipse.che.ide.api.action.ActionManager;
 import org.eclipse.che.ide.api.action.DefaultActionGroup;
+import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.constraints.Constraints;
+import org.eclipse.che.ide.api.editor.EditorAgent;
 import org.eclipse.che.ide.api.extension.Extension;
 import org.eclipse.che.ide.api.filetypes.FileType;
 import org.eclipse.che.ide.api.filetypes.FileTypeRegistry;
 import org.eclipse.che.ide.api.icon.Icon;
 import org.eclipse.che.ide.api.icon.IconRegistry;
+import org.eclipse.che.ide.api.outputconsole.OutputConsoleRendererRegistry;
 import org.eclipse.che.plugin.csharp.ide.action.CreateCSharpSourceFileAction;
+import org.eclipse.che.plugin.csharp.ide.console.CSharpOutputRenderer;
+import org.eclipse.che.plugin.csharp.shared.Constants;
 
 import static org.eclipse.che.ide.api.action.IdeActions.GROUP_FILE_NEW;
 
@@ -35,8 +40,14 @@ public class CSharpExtension {
 
     @Inject
     public CSharpExtension(FileTypeRegistry fileTypeRegistry,
-                           @Named("CSharpFileType") FileType csharpFile) {
+                           @Named("CSharpFileType") FileType csharpFile,
+                           OutputConsoleRendererRegistry rendererRegistry, 
+                           AppContext appContext,
+                           EditorAgent editorAgent) {
         fileTypeRegistry.registerFileType(csharpFile);
+        
+        rendererRegistry.register(CSHARP_CATEGORY, 
+                new CSharpOutputRenderer(CSHARP_CATEGORY, appContext, editorAgent));
     }
 
     @Inject

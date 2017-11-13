@@ -8,17 +8,20 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.ide.console;
+package org.eclipse.che.ide.api.outputconsole;
 
 /**
  * An interface to allow output text customizations 
  * 
  * @author Victor Rubezhny
  */
-public interface OutputCustomizer {
-    /** Checks if the specified text can be/has to be customized */
-    boolean canCustomize(String text);
+public interface OutputConsoleRenderer {
+    /** Checks if the specified text can be/has to be rendered */
+    boolean canRender(String text);
 
-    /** Returns the result of customization for the specified text */
-    String customize(String text);
+    /** Returns the result of rendering for the specified text */
+    String render(String text);
+    
+    /** Returns the renderer name */
+    String getName();
 }

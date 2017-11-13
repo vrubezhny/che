@@ -10,13 +10,11 @@
  *******************************************************************************/
 package org.eclipse.che.ide.command.editor;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.AcceptsOneWidget;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
+import static org.eclipse.che.ide.api.notification.StatusNotification.DisplayMode.EMERGE_MODE;
+import static org.eclipse.che.ide.api.notification.StatusNotification.Status.WARNING;
+
+import java.util.LinkedList;
+import java.util.List;
 
 import org.eclipse.che.api.promises.client.Operation;
 import org.eclipse.che.api.promises.client.OperationException;
@@ -42,16 +40,19 @@ import org.eclipse.che.ide.command.editor.page.goal.GoalPage;
 import org.eclipse.che.ide.command.editor.page.name.NamePage;
 import org.eclipse.che.ide.command.editor.page.previewurl.PreviewUrlPage;
 import org.eclipse.che.ide.command.editor.page.project.ProjectsPage;
+import org.eclipse.che.ide.command.editor.page.renderer.RenderersPage;
 import org.eclipse.che.ide.command.node.CommandFileNode;
 import org.eclipse.che.ide.command.node.NodeFactory;
 import org.vectomatic.dom.svg.ui.SVGImage;
 import org.vectomatic.dom.svg.ui.SVGResource;
 
-import java.util.LinkedList;
-import java.util.List;
-
-import static org.eclipse.che.ide.api.notification.StatusNotification.DisplayMode.EMERGE_MODE;
-import static org.eclipse.che.ide.api.notification.StatusNotification.Status.WARNING;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.AcceptsOneWidget;
+import com.google.gwt.user.client.ui.IsWidget;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /** Presenter for command editor. */
 public class CommandEditor extends AbstractEditorPresenter implements CommandEditorView.ActionDelegate,
@@ -87,6 +88,7 @@ public class CommandEditor extends AbstractEditorPresenter implements CommandEdi
                          CommandManager commandManager,
                          NamePage namePage,
                          ProjectsPage projectsPage,
+                         RenderersPage renderersPage,
                          CommandLinePage commandLinePage,
                          GoalPage goalPage,
                          PreviewUrlPage previewUrlPage,
@@ -113,6 +115,7 @@ public class CommandEditor extends AbstractEditorPresenter implements CommandEdi
 
         pages = new LinkedList<>();
         pages.add(previewUrlPage);
+        pages.add(renderersPage);
         pages.add(projectsPage);
         pages.add(goalPage);
         pages.add(commandLinePage);
@@ -133,7 +136,6 @@ public class CommandEditor extends AbstractEditorPresenter implements CommandEdi
         if (file instanceof CommandFileNode) {
             // make a copy of the given command to avoid modifying of the provided command
             editedCommand = new CommandImpl(((CommandFileNode)file).getData());
-
             initializePages();
 
             pages.forEach(page -> view.addPage(page.getView(), page.getTitle()));

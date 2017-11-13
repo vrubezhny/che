@@ -10,11 +10,13 @@
  *******************************************************************************/
 package org.eclipse.che.ide.console;
 
+import org.eclipse.che.ide.api.outputconsole.OutputConsole;
+import org.eclipse.che.ide.api.outputconsole.OutputConsoleRendererRegistry;
+
 import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.gwt.inject.client.assistedinject.GinFactoryModuleBuilder;
+import com.google.inject.Singleton;
 import com.google.inject.name.Names;
-
-import org.eclipse.che.ide.api.outputconsole.OutputConsole;
 
 /**
  * GIN module for configuring command consoles.
@@ -27,5 +29,7 @@ public class ConsoleGinModule extends AbstractGinModule {
                         .implement(CommandOutputConsole.class, Names.named("command"), CommandOutputConsolePresenter.class)
                         .implement(OutputConsole.class, Names.named("default"), DefaultOutputConsole.class)
                         .build(CommandConsoleFactory.class));
+        
+        bind(OutputConsoleRendererRegistry.class).to(OutputConsoleRendererRegistryImpl.class).in(Singleton.class);
     }
 }

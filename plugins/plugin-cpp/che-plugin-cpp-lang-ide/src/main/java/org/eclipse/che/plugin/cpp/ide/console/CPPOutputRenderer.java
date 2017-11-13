@@ -8,18 +8,19 @@
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
  *******************************************************************************/
-package org.eclipse.che.ide.console;
+package org.eclipse.che.plugin.cpp.ide.console;
 
 import static com.google.gwt.regexp.shared.RegExp.compile;
 
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.editor.EditorAgent;
+import org.eclipse.che.ide.console.AbstractOutputRenderer;
 import org.eclipse.che.ide.resource.Path;
 
 import com.google.gwt.regexp.shared.RegExp;
 
 /**
- * Output customizer adds an anchor link to the lines that match C/CPP
+ * Output renderer adds an anchor link to the lines that match C/CPP
  * compilation error or warning message and installs the handler functions for
  * the links. The handler parses the C/CPP compilation error or warning message
  * line, searches for a candidate C/CPP file to navigate to, opens the found
@@ -28,20 +29,20 @@ import com.google.gwt.regexp.shared.RegExp;
  * 
  * @author Victor Rubezhny
  */
-public class CPPOutputCustomizer extends AbstractOutputCustomizer {
+public class CPPOutputRenderer extends AbstractOutputRenderer {
 
     private static final RegExp COMPILATION_MESSAGE = 
             compile("(.+\\.(c|C|cc|CC|cpp|CPP|h|H|hpp|HPP):\\d+:\\d+: (error|fatal error|note|warning): .+)");
     private static final RegExp LINKER_MESSAGE = compile("(.+\\.(c|C|cc|CC|cpp|CPP|h|H|hpp|HPP):\\d+: .+)");
 
     /**
-     * Constructs C/CPP Output Customizer Object
+     * Constructs C/CPP Output Renderer Object
      * 
      * @param appContext
      * @param editorAgent
      */
-    public CPPOutputCustomizer(AppContext appContext, EditorAgent editorAgent) {
-        super(appContext, editorAgent);
+    public CPPOutputRenderer(String name, AppContext appContext, EditorAgent editorAgent) {
+        super(name, appContext, editorAgent);
 
         exportCompilationMessageAnchorClickHandlerFunction();
         exportLinkerMessageAnchorClickHandlerFunction();
@@ -51,10 +52,10 @@ public class CPPOutputCustomizer extends AbstractOutputCustomizer {
      * (non-Javadoc)
      * 
      * @see org.eclipse.che.ide.extension.machine.client.outputspanel.console.
-     * OutputCustomizer#canCustomize(java.lang.String)
+     * OutputRenderer#canRender(java.lang.String)
      */
     @Override
-    public boolean canCustomize(String text) {
+    public boolean canRender(String text) {
         return (COMPILATION_MESSAGE.test(text) || 
                 LINKER_MESSAGE.test(text));
     }
@@ -63,23 +64,23 @@ public class CPPOutputCustomizer extends AbstractOutputCustomizer {
      * (non-Javadoc)
      * 
      * @see org.eclipse.che.ide.extension.machine.client.outputspanel.console.
-     * OutputCustomizer#customize(java.lang.String)
+     * OutputRenderer#render(java.lang.String)
      */
     @Override
-    public String customize(String text) {
+    public String render(String text) {
         if (COMPILATION_MESSAGE.test(text))
-            return customizeCompilationMessage(text);
+            return renderCompilationMessage(text);
 
         if (LINKER_MESSAGE.test(text))
-            return customizeLinkerMessage(text);
+            return renderLinkerMessage(text);
 
         return text;
     }
 
     /*
-     * Customizes a compilation message line
+     * Processes a compilation message line
      */
-    private String customizeCompilationMessage(String text) {
+    private String renderCompilationMessage(String text) {
         try {
             int lineStart = text.indexOf(":") + ":".length();
             int lineEnd = text.indexOf(":", lineStart);
@@ -105,9 +106,9 @@ public class CPPOutputCustomizer extends AbstractOutputCustomizer {
     }
 
     /*
-     * Customizes a linker message line
+     * Processes a linker message line
      */
-    private String customizeLinkerMessage(String text) {
+    private String renderLinkerMessage(String text) {
         try {
             int lineStart = text.indexOf(":") + ":".length(), lineEnd = text.indexOf(":", lineStart);
             String fileName = text.substring(0, text.indexOf(":")).trim();
@@ -168,7 +169,7 @@ public class CPPOutputCustomizer extends AbstractOutputCustomizer {
     public native void exportCompilationMessageAnchorClickHandlerFunction() /*-{
         var that = this;
         $wnd.openCM = $entry(function(fileName,lineNumber,columnNumber) {
-            that.@org.eclipse.che.ide.console.CPPOutputCustomizer::handleCompilationMessageAnchorClick(*)(fileName,lineNumber,columnNumber);
+            that.@org.eclipse.che.plugin.cpp.ide.console.CPPOutputRenderer::handleCompilationMessageAnchorClick(*)(fileName,lineNumber,columnNumber);
         });
     }-*/;
 
@@ -178,7 +179,7 @@ public class CPPOutputCustomizer extends AbstractOutputCustomizer {
     public native void exportLinkerMessageAnchorClickHandlerFunction() /*-{
         var that = this;
         $wnd.openLM = $entry(function(fileName,lineNumber) {
-            that.@org.eclipse.che.ide.console.CPPOutputCustomizer::handleLinkerMessageAnchorClick(*)(fileName,lineNumber);
+            that.@org.eclipse.che.plugin.cpp.ide.console.CPPOutputRenderer::handleLinkerMessageAnchorClick(*)(fileName,lineNumber);
         });
     }-*/;
 }

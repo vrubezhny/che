@@ -10,22 +10,26 @@
  *******************************************************************************/
 package org.eclipse.che.plugin.cpp.ide;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import static org.eclipse.che.ide.api.action.IdeActions.GROUP_FILE_NEW;
 
 import org.eclipse.che.ide.api.action.ActionManager;
 import org.eclipse.che.ide.api.action.DefaultActionGroup;
+import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.constraints.Constraints;
+import org.eclipse.che.ide.api.editor.EditorAgent;
 import org.eclipse.che.ide.api.extension.Extension;
 import org.eclipse.che.ide.api.filetypes.FileType;
 import org.eclipse.che.ide.api.filetypes.FileTypeRegistry;
 import org.eclipse.che.ide.api.icon.Icon;
 import org.eclipse.che.ide.api.icon.IconRegistry;
+import org.eclipse.che.ide.api.outputconsole.OutputConsoleRendererRegistry;
 import org.eclipse.che.plugin.cpp.ide.action.CreateCSourceFileAction;
 import org.eclipse.che.plugin.cpp.ide.action.CreateCppSourceFileAction;
 import org.eclipse.che.plugin.cpp.ide.action.CreateHeaderSourceFileAction;
+import org.eclipse.che.plugin.cpp.ide.console.CPPOutputRenderer;
 
-import static org.eclipse.che.ide.api.action.IdeActions.GROUP_FILE_NEW;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * @author Vitalii Parfonov
@@ -40,10 +44,16 @@ public class CppExtension {
     public CppExtension(FileTypeRegistry fileTypeRegistry,
                         @Named("CFileType") FileType cFile,
                         @Named("CppFileType") FileType cppFile,
-                        @Named("HFileType") FileType hFile) {
+                        @Named("HFileType") FileType hFile,
+                        OutputConsoleRendererRegistry rendererRegistry, 
+                        AppContext appContext,
+                        EditorAgent editorAgent) {
         fileTypeRegistry.registerFileType(cFile);
         fileTypeRegistry.registerFileType(cppFile);
         fileTypeRegistry.registerFileType(hFile);
+        
+        rendererRegistry.register(C_CATEGORY, 
+                new CPPOutputRenderer(C_CATEGORY, appContext, editorAgent));
     }
 
     @Inject

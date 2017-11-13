@@ -17,6 +17,8 @@ import org.eclipse.che.ide.api.command.CommandPage;
 import org.eclipse.che.ide.api.command.CommandType;
 import org.eclipse.che.ide.api.icon.Icon;
 import org.eclipse.che.ide.api.icon.IconRegistry;
+import org.eclipse.che.ide.api.outputconsole.OutputConsoleRendererRegistry;
+import org.eclipse.che.ide.ext.java.client.JavaExtension;
 import org.eclipse.che.ide.ext.java.client.JavaLocalizationConstant;
 import org.eclipse.che.ide.ext.java.client.JavaResources;
 import org.eclipse.che.ide.ext.java.client.command.valueproviders.ClasspathMacro;
@@ -52,7 +54,8 @@ public class JavaCommandType implements CommandType {
                            OutputDirMacro outputDirMacro,
                            ClasspathMacro classpathMacro,
                            IconRegistry iconRegistry,
-                           JavaLocalizationConstant localizationConstants) {
+                           JavaLocalizationConstant localizationConstants,
+                           OutputConsoleRendererRegistry rendererRegistry) {
         this.currentProjectPathMacro = currentProjectPathMacro;
         this.sourcepathMacro = sourcepathMacro;
         this.outputDirMacro = outputDirMacro;
@@ -62,6 +65,7 @@ public class JavaCommandType implements CommandType {
         pages.add(page);
 
         iconRegistry.registerIcon(new Icon("command.type." + ID, resources.javaCategoryIcon()));
+        rendererRegistry.registerCommandDefault(ID, JavaExtension.JAVA_CATEGORY);
     }
 
     @Override
