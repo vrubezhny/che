@@ -121,6 +121,7 @@ public class CommandApiModule extends AbstractGinModule {
     bind(NamePageView.class).to(NamePageViewImpl.class);
     bind(GoalPageView.class).to(GoalPageViewImpl.class);
     bind(ProjectsPageView.class).to(ProjectsPageViewImpl.class);
+    bind(RenderersPageView.class).to(RenderersPageViewImpl.class);
     bind(PageWithTextEditorView.class).to(PageWithTextEditorViewImpl.class);
 
     // toolbar

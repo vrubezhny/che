@@ -85,6 +85,7 @@ public class CommandEditor extends AbstractEditorPresenter
       CommandManager commandManager,
       NamePage namePage,
       ProjectsPage projectsPage,
+      RenderersPage renderersPage,
       CommandLinePage commandLinePage,
       GoalPage goalPage,
       PreviewUrlPage previewUrlPage,
@@ -111,6 +112,7 @@ public class CommandEditor extends AbstractEditorPresenter
 
     pages = new LinkedList<>();
     pages.add(previewUrlPage);
+    pages.add(renderersPage);
     pages.add(projectsPage);
     pages.add(goalPage);
     pages.add(commandLinePage);
