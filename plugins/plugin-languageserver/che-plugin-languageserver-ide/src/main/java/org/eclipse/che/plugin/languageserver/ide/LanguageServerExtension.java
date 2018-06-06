@@ -42,6 +42,7 @@ import org.eclipse.che.plugin.languageserver.ide.rename.LSRenameAction;
 import org.eclipse.che.plugin.languageserver.ide.service.ExecuteClientCommandReceiver;
 import org.eclipse.che.plugin.languageserver.ide.service.PublishDiagnosticsReceiver;
 import org.eclipse.che.plugin.languageserver.ide.service.ShowMessageJsonRpcReceiver;
+import org.eclipse.che.plugin.languageserver.ide.service.StatusReportReceiver;
 import org.eclipse.che.plugin.languageserver.ide.service.TextDocumentServiceClient;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
@@ -62,7 +63,8 @@ public class LanguageServerExtension {
       AppContext appContext,
       ShowMessageJsonRpcReceiver showMessageJsonRpcReceiver,
       PublishDiagnosticsReceiver publishDiagnosticsReceiver,
-      ExecuteClientCommandReceiver executeClientCommandReceiver) {
+      ExecuteClientCommandReceiver executeClientCommandReceiver,
+      StatusReportReceiver statusReportReceiver) {
     eventBus.addHandler(
         WsAgentServerRunningEvent.TYPE,
         e -> {
@@ -71,6 +73,7 @@ public class LanguageServerExtension {
           showMessageJsonRpcReceiver.subscribe();
           publishDiagnosticsReceiver.subscribe();
           executeClientCommandReceiver.subscribe();
+          statusReportReceiver.subscribe();
         });
 
     if (appContext.getWorkspace().getStatus() == RUNNING) {
@@ -79,6 +82,7 @@ public class LanguageServerExtension {
       showMessageJsonRpcReceiver.subscribe();
       publishDiagnosticsReceiver.subscribe();
       executeClientCommandReceiver.subscribe();
+      statusReportReceiver.subscribe();
     }
   }
 

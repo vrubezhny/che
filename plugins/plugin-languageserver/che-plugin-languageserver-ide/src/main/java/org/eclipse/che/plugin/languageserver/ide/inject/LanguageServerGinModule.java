@@ -27,6 +27,7 @@ import org.eclipse.che.plugin.languageserver.ide.rename.node.RenameNodeFactory;
 import org.eclipse.che.plugin.languageserver.ide.service.ExecuteClientCommandReceiver;
 import org.eclipse.che.plugin.languageserver.ide.service.PublishDiagnosticsReceiver;
 import org.eclipse.che.plugin.languageserver.ide.service.ShowMessageJsonRpcReceiver;
+import org.eclipse.che.plugin.languageserver.ide.service.StatusReportReceiver;
 
 /** @author Anatolii Bazko */
 @ExtensionGinModule
@@ -50,6 +51,7 @@ public class LanguageServerGinModule extends AbstractGinModule {
     bind(PublishDiagnosticsReceiver.class).asEagerSingleton();
     bind(ShowMessageJsonRpcReceiver.class).asEagerSingleton();
     bind(ExecuteClientCommandReceiver.class).asEagerSingleton();
+    bind(StatusReportReceiver.class).asEagerSingleton();
 
     GinMultibinder.newSetBinder(binder(), LanguageDescription.class);
   }

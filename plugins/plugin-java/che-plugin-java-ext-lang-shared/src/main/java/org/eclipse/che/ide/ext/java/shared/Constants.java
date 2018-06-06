@@ -67,6 +67,10 @@ public final class Constants {
   public static final String EXECUTE_CLIENT_COMMAND_SUBSCRIBE =
       "workspace/executeClientCommand/subscribe";
 
+  public static final String STATUS_REPORT = "language/status";
+  public static final String STATUS_REPORT_UNSUBSCRIBE = "language/status/unsubscribe";
+  public static final String STATUS_REPORT_SUBSCRIBE = "language/status/subscribe";
+
   private Constants() {
     throw new UnsupportedOperationException("Unused constructor.");
   }

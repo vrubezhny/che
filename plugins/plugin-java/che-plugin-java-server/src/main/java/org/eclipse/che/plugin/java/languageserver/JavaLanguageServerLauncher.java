@@ -29,10 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.languageserver.LanguageServerConfig;
 import org.eclipse.che.api.languageserver.ProcessCommunicationProvider;
 import org.eclipse.che.api.languageserver.service.FileContentAccess;
+import org.eclipse.che.api.languageserver.shared.model.StatusReportParams;
 import org.eclipse.che.api.languageserver.util.DynamicWrapper;
+import org.eclipse.che.api.project.server.ProjectManager;
+import org.eclipse.che.api.project.server.notification.ProjectUpdatedEvent;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.services.LanguageClient;
@@ -52,18 +56,75 @@ public class JavaLanguageServerLauncher implements LanguageServerConfig {
   private final Path launchScript;
   private ProcessorJsonRpcCommunication processorJsonRpcCommunication;
   private ExecuteClientCommandJsonRpcTransmitter executeCliendCommandTransmitter;
+  private StatusReportJsonRpcTransmitter statusReportTransmitter;
+  private EventService eventService;
+  private ProjectManager projectManager;
 
   @Inject
   public JavaLanguageServerLauncher(
       ProcessorJsonRpcCommunication processorJsonRpcCommunication,
-      ExecuteClientCommandJsonRpcTransmitter executeCliendCommandTransmitter) {
+      ExecuteClientCommandJsonRpcTransmitter executeCliendCommandTransmitter,
+      StatusReportJsonRpcTransmitter statusReportTransmitter,
+      EventService eventService,
+      ProjectManager projectManager) {
     this.processorJsonRpcCommunication = processorJsonRpcCommunication;
     this.executeCliendCommandTransmitter = executeCliendCommandTransmitter;
+    this.statusReportTransmitter = statusReportTransmitter;
+    this.eventService = eventService;
+    this.projectManager = projectManager;
     launchScript = Paths.get(System.getenv("HOME"), "che/ls-java/launch.sh");
   }
 
   public void sendStatusReport(StatusReport report) {
     LOG.info("{}: {}", report.getType(), report.getMessage());
+    try {
+      statusReportTransmitter.sendStatusReport(
+          new StatusReportParams(report.getType(), report.getMessage()));
+      if ("Started".equals(report.getType())) {
+        // updateWorkspaceOnLSStarted();
+      }
+    } catch (Exception e) {
+      LOG.error(
+          "An exception occurred while sending the Projects Init StatusReport is sent: {}: {}: {}",
+          report.getType(),
+          report.getMessage(),
+          e);
+    }
+    LOG.info("Projects Init StatusReport is sent {}: {}", report.getType(), report.getMessage());
+  }
+
+  private void updateWorkspaceOnLSStarted() {
+    LOG.info("{}.updateWorkspaceOnLSStarted(): invoked", this.getClass().getName());
+    projectManager
+        .getAll()
+        .forEach(
+            registeredProject -> {
+              LOG.info(
+                  "{}.updateWorkspaceOnLSStarted(): updating {}",
+                  this.getClass().getName(),
+                  registeredProject.getName());
+              if (!registeredProject.getProblems().isEmpty()) {
+                try {
+                  projectManager.update(registeredProject);
+                  eventService.publish(new ProjectUpdatedEvent(registeredProject.getPath()));
+                  LOG.info(
+                      "{}.updateWorkspaceOnLSStarted(): \tProject {} is updated",
+                      this.getClass().getName(),
+                      registeredProject.getName());
+                } catch (Exception e) {
+                  LOG.error(
+                      String.format(
+                          "Failed to update project '%s' configuration",
+                          registeredProject.getName()),
+                      e);
+                }
+              } else {
+                LOG.info(
+                    "{}.updateWorkspaceOnLSStarted(): \tProject {} is not to be updated",
+                    this.getClass().getName(),
+                    registeredProject.getName());
+              }
+            });
   }
 
   /**
