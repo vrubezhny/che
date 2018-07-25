@@ -19,6 +19,7 @@ import static org.eclipse.che.ide.api.resources.ResourceDelta.ADDED;
 import static org.eclipse.che.ide.api.resources.ResourceDelta.MOVED_FROM;
 import static org.eclipse.che.ide.api.resources.ResourceDelta.MOVED_TO;
 import static org.eclipse.che.ide.api.resources.ResourceDelta.REMOVED;
+import static org.eclipse.che.ide.api.resources.ResourceDelta.SYNCHRONIZED;
 import static org.eclipse.che.ide.api.resources.ResourceDelta.UPDATED;
 
 import com.google.common.collect.Sets;
@@ -292,6 +293,8 @@ public class ProjectExplorerPresenter extends BasePresenter
   @Override
   @SuppressWarnings("unchecked")
   public void onResourceChanged(ResourceChangedEvent event) {
+    logCallStack("ProjectExplorerPresenter.onResourceChanged(" + dumpEvent(event) + "): invoked");
+
     final Tree tree = view.getTree();
     final ResourceDelta delta = event.getDelta();
     final Resource resource = delta.getResource();
@@ -336,21 +339,61 @@ public class ProjectExplorerPresenter extends BasePresenter
           }
         }
       } else if (delta.getKind() == UPDATED) {
+        log("ProjectExplorerPresenter.onResourceChanged(): Root nodes Updated: start");
         for (Node node : tree.getNodeStorage().getAll()) {
           if (node instanceof ResourceNode
               && ((ResourceNode) node)
                   .getData()
                   .getLocation()
                   .equals(delta.getResource().getLocation())) {
+            log(
+                "ProjectExplorerPresenter.onResourceChanged(): Node: "
+                    + node.getName()
+                    + ": is resource and etc.: start");
+
             final String oldId = tree.getNodeStorage().getKeyProvider().getKey(node);
+            log(
+                "ProjectExplorerPresenter.onResourceChanged(): Node: "
+                    + node.getName()
+                    + ": oldId: "
+                    + oldId);
+            log(
+                "ProjectExplorerPresenter.onResourceChanged(): Node: "
+                    + node.getName()
+                    + ": set data: "
+                    + delta.getResource().getLocation().toString());
             ((ResourceNode) node).setData(delta.getResource());
+            log(
+                "ProjectExplorerPresenter.onResourceChanged(): Node: "
+                    + node.getName()
+                    + ": reindexing");
             tree.getNodeStorage().reIndexNode(oldId, node);
+            log(
+                "ProjectExplorerPresenter.onResourceChanged(): Node: "
+                    + node.getName()
+                    + ": refreshing node");
             tree.refresh(node);
+            log(
+                "ProjectExplorerPresenter.onResourceChanged(): Node: "
+                    + node.getName()
+                    + ": submiting update");
             updateTask.submit(delta.getResource().getLocation());
+          } else {
+            log(
+                "ProjectExplorerPresenter.onResourceChanged(): Node: "
+                    + node.getName()
+                    + ": NOT is resource and etc.: start");
           }
         }
+        log("ProjectExplorerPresenter.onResourceChanged(): Root nodes Updated: done");
       }
     } else {
+      log(
+          "A poject (?) Updated: start: "
+              + resource.getLocation()
+              + " ("
+              + resource.getLocation().segmentCount()
+              + ")");
 
       if ((delta.getFlags() & (MOVED_FROM | MOVED_TO)) != 0) {
         final Node node = getNode(delta.getFromPath());
@@ -361,6 +404,12 @@ public class ProjectExplorerPresenter extends BasePresenter
       }
 
       final Node node = getNode(delta.getResource().getLocation());
+      log(
+          "A poject (?) Updated: node: "
+              + resource.getLocation()
+              + ": node ("
+              + (node == null ? "NULL" : node.getName())
+              + ")");
       if (node != null) {
 
         if (node instanceof ResourceNode) {
@@ -375,6 +424,13 @@ public class ProjectExplorerPresenter extends BasePresenter
         }
 
         if (node instanceof HasPresentation) {
+          log(
+              "A poject (?) Updated: refreshing presentation of node: "
+                  + resource.getLocation()
+                  + ": node ("
+                  + (node == null ? "NULL" : node.getName())
+                  + ")");
+
           tree.refresh(node);
         }
       }
@@ -384,8 +440,49 @@ public class ProjectExplorerPresenter extends BasePresenter
       if (delta.getFromPath() != null) {
         updateTask.submit(delta.getFromPath());
       }
+      log("A poject (?) Updated: done: " + resource.getLocation());
     }
   }
+
+  public static void logCallStack(String msg) {
+    Exception e = new Exception(msg);
+    StackTraceElement[] stElements = e.getStackTrace();
+    String result = msg + ":";
+    for (StackTraceElement ste : stElements) {
+      result += "\n\t" + ste.toString();
+    }
+    log(result);
+  }
+
+  public static String dumpEvent(ResourceChangedEvent event) {
+    String result = "ResourceChangedEvent[\n\tClass: " + event.getClass().getName();
+    final ResourceDelta delta = event.getDelta();
+    final Resource resource = delta.getResource();
+    result += "\n\tKind: ";
+    switch (delta.getKind()) {
+      case ADDED:
+        result += "ADDED";
+        break;
+      case REMOVED:
+        result += "REMOVED";
+        break;
+      case UPDATED:
+        result += "ADDED";
+        break;
+      case SYNCHRONIZED:
+        result += "SYNCHRONIZED";
+        break;
+      default:
+        result += "UNKNOWN (" + delta.getKind() + ")";
+        break;
+    }
+    result += "\n\tResource: " + resource.getName() + " [" + resource.getURL() + "]";
+    return result + "\n]";
+  }
+
+  public static native void log(String message) /*-{
+		  if (window.console && console.log) console.log(message);
+		}-*/;
 
   private Node getNode(Path path) {
     final Tree tree = view.getTree();
@@ -406,6 +503,9 @@ public class ProjectExplorerPresenter extends BasePresenter
 
   @Override
   public void onMarkerChanged(MarkerChangedEvent event) {
+    log(
+        "ProjectExplorerPresenter.onMarkerChanged(): start: "
+            + event.getResource().getLocation().toString());
     final Tree tree = view.getTree();
     for (Node node : tree.getNodeStorage().getAll()) {
       if (node instanceof ResourceNode
@@ -413,9 +513,13 @@ public class ProjectExplorerPresenter extends BasePresenter
               .getData()
               .getLocation()
               .equals(event.getResource().getLocation())) {
+        log(
+            "ProjectExplorerPresenter.onMarkerChanged(): refreshing tree for: "
+                + event.getResource().getLocation().toString());
         tree.refresh(node);
       }
     }
+    log("ProjectExplorerPresenter.onMarkerChanged(): done");
   }
 
   @Override
@@ -532,6 +636,10 @@ public class ProjectExplorerPresenter extends BasePresenter
     private Set<Path> toRefresh = new HashSet<>();
 
     public void submit(Path path) {
+      log(
+          "UpdateTask.submit(\"path.uptoSegment(1)\"): "
+              + path.uptoSegment(1)
+              + " delayed for 500ms");
       toRefresh.add(path.uptoSegment(1));
 
       delay(500);
@@ -559,6 +667,7 @@ public class ProjectExplorerPresenter extends BasePresenter
                   }
 
                   if (getTree().isExpanded(node)) {
+
                     view.getTree().getNodeLoader().loadChildren(node, true);
                   }
                 }

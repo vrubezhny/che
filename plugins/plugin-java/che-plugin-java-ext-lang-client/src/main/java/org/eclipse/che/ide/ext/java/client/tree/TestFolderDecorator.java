@@ -49,7 +49,7 @@ public class TestFolderDecorator implements NodeInterceptor {
   /** {@inheritDoc} */
   @Override
   public Promise<List<Node>> intercept(Node parent, List<Node> children) {
-
+    log("TestFolderDecorator.intercept(" + parent.getName() + "): start");
     final List<Node> intercepted = new ArrayList<>();
 
     for (Node node : children) {
@@ -60,10 +60,14 @@ public class TestFolderDecorator implements NodeInterceptor {
         intercepted.add(node);
       }
     }
+    log("TestFolderDecorator.intercept(" + parent.getName() + "): done");
 
     return promises.resolve(intercepted);
   }
 
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
   /** {@inheritDoc} */
   @Override
   public int getPriority() {
@@ -71,10 +75,15 @@ public class TestFolderDecorator implements NodeInterceptor {
   }
 
   protected Node transform(ResourceNode resourceNode) {
+    log("TestFolderDecorator.intercept(" + resourceNode.getName() + "): start");
     final Optional<Resource> srcFolder =
         resourceNode.getData().getParentWithMarker(SourceFolderMarker.ID);
 
     if (!srcFolder.isPresent()) {
+      log(
+          "TestFolderDecorator.intercept("
+              + resourceNode.getName()
+              + "): done: [!srcFolder.isPresent()]");
       return resourceNode;
     }
 
@@ -89,8 +98,13 @@ public class TestFolderDecorator implements NodeInterceptor {
           .put(
               CUSTOM_BACKGROUND_FILL,
               singletonList(Style.theme.projectExplorerTestItemBackground()));
+      log(
+          "TestFolderDecorator.intercept("
+              + resourceNode.getName()
+              + "): Added TEST_SOURCE decorator");
     }
 
+    log("TestFolderDecorator.intercept(" + resourceNode.getName() + "): done");
     return resourceNode;
   }
 }

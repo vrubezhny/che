@@ -10,6 +10,8 @@
  */
 package org.eclipse.che.ide.ext.java.client.command;
 
+import static org.eclipse.che.ide.ext.java.shared.ClasspathEntryKind.SOURCE;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
@@ -73,6 +75,27 @@ public class ClasspathContainer implements ClasspathChangedEvent.ClasspathChange
 
   @Override
   public void onClasspathChanged(ClasspathChangedEvent event) {
-    classpath.put(event.getPath(), promiseProvider.resolve(event.getEntries()));
+    Promise<List<ClasspathEntry>> entries = promiseProvider.resolve(event.getEntries());
+
+    entries.then(
+        es -> {
+          String msg =
+              "ClasspathContainer.onClasspathChanged(): Path: "
+                  + event.getPath()
+                  + ", SOURCE Entries: ";
+
+          for (ClasspathEntry e : es) {
+            if (e.getEntryKind() == SOURCE) {
+              msg += "\n\tKind: " + e.getEntryKind() + ", Path: " + e.getPath();
+            }
+          }
+          log(msg);
+        });
+    classpath.put(event.getPath(), entries);
+    //    classpath.put(event.getPath(), promiseProvider.resolve(event.getEntries()));
   }
+
+  public static native void log(String message) /*-{
+    if (window.console && console.log) console.log(message);
+  }-*/;
 }

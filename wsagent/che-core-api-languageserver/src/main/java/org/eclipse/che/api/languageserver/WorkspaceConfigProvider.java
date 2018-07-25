@@ -83,6 +83,15 @@ class WorkspaceConfigProvider implements LanguageServerConfigProvider {
           String id = configExtractor.extractId(attributes);
           Map<String, String> languageRegexes = configExtractor.extractLanguageRegexes(attributes);
           Set<String> fileWatchPatterns = configExtractor.extractFileWatchPatterns(attributes);
+          String sFWP = "";
+          for (String p : fileWatchPatterns) {
+        	  sFWP += "\n\t\t" + p;
+          }
+          LOG.info("getAll(): LS config found: "
+        		  + "\n\t Server URL: " + serverUrl
+        		  + "\n\t ID: " + id
+        		  + "\n\t FileWatch patterns:" + sFWP); 
+          
           CommunicationProvider communicationProvider =
               new SocketCommunicationProvider(new URI(serverUrl));
 

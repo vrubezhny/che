@@ -15,6 +15,7 @@ import static org.eclipse.che.api.languageserver.LanguageServiceUtils.removePref
 import static org.eclipse.che.api.languageserver.util.JsonUtil.convertToJson;
 import static org.eclipse.che.jdt.ls.extension.api.Commands.CLIENT_UPDATE_PROJECT;
 import static org.eclipse.che.jdt.ls.extension.api.Commands.CLIENT_UPDATE_PROJECTS_CLASSPATH;
+import static org.eclipse.che.jdt.ls.extension.api.Commands.CLIENT_UPDATE_ON_PROJECT_CLASSPATH_CHANGED;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -94,8 +95,11 @@ public class JavaLanguageServerLauncher implements LanguageServerConfig {
             registeredProject -> {
               if (!registeredProject.getProblems().isEmpty()) {
                 try {
+                                	
                   projectManager.update(registeredProject);
                   eventService.publish(new ProjectUpdatedEvent(registeredProject.getPath()));
+                  LOG.info("updateWorkspaceOnLSStarted(): notifying client on init of project: " + registeredProject.getPath());
+                  notifyClient(registeredProject.getPath());
                 } catch (ForbiddenException
                     | ServerException
                     | NotFoundException
@@ -109,6 +113,12 @@ public class JavaLanguageServerLauncher implements LanguageServerConfig {
                 }
               }
             });
+  }
+  
+  private void notifyClient(String projectPath) {
+    List<Object> parameters = new ArrayList<>();
+    parameters.add(removePrefixUri(convertToJson(projectPath).getAsString()));
+    executeClientCommand(new ExecuteCommandParams(CLIENT_UPDATE_ON_PROJECT_CLASSPATH_CHANGED, parameters));
   }
 
   /**
@@ -129,9 +139,11 @@ public class JavaLanguageServerLauncher implements LanguageServerConfig {
     String command = params.getCommand();
     switch (command) {
       case CLIENT_UPDATE_PROJECTS_CLASSPATH:
+      case CLIENT_UPDATE_ON_PROJECT_CLASSPATH_CHANGED:
         List<Object> fixedPathList = new ArrayList<>(params.getArguments().size());
         for (Object uri : params.getArguments()) {
           fixedPathList.add(removePrefixUri(convertToJson(uri).getAsString()));
+          LOG.info("convertParams("+command+"): "+String.valueOf(uri) +"==>>"+removePrefixUri(convertToJson(uri).getAsString()));
         }
         params.setArguments(fixedPathList);
         break;

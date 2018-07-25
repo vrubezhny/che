@@ -267,19 +267,29 @@ public class NodeLoader implements LoaderHandler.HasLoaderHandlers {
   }
 
   public boolean loadChildren(Node parent, boolean reloadExpandedChild) {
+    log("NodeLoader.loadChildren(" + parent.getName() + "): start");
     // we don't need to load children for leaf nodes
     if (parent.isLeaf()) {
+      log("NodeLoader.loadChildren(" + parent.getName() + "): done: FALSE: isLeaf");
+
       return false;
     }
 
     if (childRequested.containsKey(parent)) {
+      log("NodeLoader.loadChildren(" + parent.getName() + "): done: FALSE: already requested");
+
       return false;
     }
 
     childRequested.put(parent, reloadExpandedChild);
-    return doLoad(parent);
+    boolean result = doLoad(parent);
+    log("NodeLoader.loadChildren(" + parent.getName() + "): done: " + result);
+    return result;
   }
 
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
   /**
    * Called when children haven't been successfully loaded. Also fire {@link
    * org.eclipse.che.ide.ui.smartTree.event.LoadExceptionEvent} event.
@@ -364,10 +374,9 @@ public class NodeLoader implements LoaderHandler.HasLoaderHandlers {
   @NotNull
   private Operation<List<Node>> interceptChildren(@NotNull final Node parent) {
     return children -> {
-      if (nodeInterceptors.isEmpty()) {
-        onLoadSuccess(parent, children);
-        return;
-      }
+      //      if (nodeInterceptors.isEmpty()) {
+      //        onLoadSuccess(parent, children);
+      //      }
 
       LinkedList<NodeInterceptor> sortedByPriorityQueue = new LinkedList<>(nodeInterceptors);
       sortedByPriorityQueue.sort(priorityComparator);
@@ -382,6 +391,12 @@ public class NodeLoader implements LoaderHandler.HasLoaderHandlers {
       for (Node child : children) {
         child.setParent(parent);
       }
+      String msg =
+          "NodeLoader.iterate(" + parent.getName() + "): calling onLoadSuccess for children: [";
+      for (Node child : children) {
+        msg += "\n\t" + child.getName();
+      }
+      log(msg + "\n]");
       onLoadSuccess(parent, children);
       return;
     }

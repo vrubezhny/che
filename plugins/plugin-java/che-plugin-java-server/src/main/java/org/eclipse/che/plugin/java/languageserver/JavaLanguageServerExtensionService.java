@@ -162,6 +162,7 @@ public class JavaLanguageServerExtensionService {
   private final ProjectManager projectManager;
   private final EventService eventService;
   private final LanguageServerInitializer initializer;
+  private final ExecuteClientCommandJsonRpcTransmitter clientCommandTransmitter;
 
   @Inject
   public JavaLanguageServerExtensionService(
@@ -169,12 +170,14 @@ public class JavaLanguageServerExtensionService {
       LanguageServerInitializer languageServerInitializer,
       RequestHandlerConfigurator requestHandler,
       ProjectManager projectManager,
-      EventService eventService) {
+      EventService eventService,
+      ExecuteClientCommandJsonRpcTransmitter clientCommandTransmitter) {
     this.registry = registry;
     this.initializer = languageServerInitializer;
     this.requestHandler = requestHandler;
     this.projectManager = projectManager;
     this.eventService = eventService;
+    this.clientCommandTransmitter = clientCommandTransmitter;
     this.gson =
         new GsonBuilder()
             .registerTypeAdapterFactory(new CollectionTypeAdapterFactory())
@@ -418,12 +421,23 @@ public class JavaLanguageServerExtensionService {
    * @param entries classpath entries
    */
   public void updateClasspath(String projectUri, List<ClasspathEntry> entries) {
+    updateClasspathWithResult(projectUri, entries);
+  }
+
+  public CompletableFuture<Object> updateClasspathWithResult(
+      String projectUri, List<ClasspathEntry> entries) {
+    LOG.info(
+        "[" + System.currentTimeMillis() + "] updateClasspathWithResult({}): start", projectUri);
     List<ClasspathEntry> fixedEntries =
         entries.stream().map(this::fixEntry).collect(Collectors.toList());
     UpdateClasspathParameters params = new UpdateClasspathParameters();
     params.setProjectUri(projectUri);
     params.setEntries(fixedEntries);
-    executeCommand(UPDATE_PROJECT_CLASSPATH, singletonList(params));
+    CompletableFuture<Object> result =
+        executeCommand(UPDATE_PROJECT_CLASSPATH, singletonList(params));
+    LOG.info(
+        "[" + System.currentTimeMillis() + "] updateClasspathWithResult({}): done", projectUri);
+    return result;
   }
 
   private ClasspathEntry fixEntry(ClasspathEntry e) {
@@ -1064,5 +1078,10 @@ public class JavaLanguageServerExtensionService {
     for (T child : childrenAccessor.apply(root)) {
       iterate(child, childrenAccessor, elementHandler);
     }
+  }
+
+  public CompletableFuture<Object> executeClientCommand(String commandId, List<Object> parameters) {
+    ExecuteCommandParams params = new ExecuteCommandParams(commandId, parameters);
+    return clientCommandTransmitter.executeClientCommand(params);
   }
 }

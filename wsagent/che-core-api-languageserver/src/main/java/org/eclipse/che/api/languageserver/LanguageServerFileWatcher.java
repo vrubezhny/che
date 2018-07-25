@@ -55,14 +55,20 @@ class LanguageServerFileWatcher {
     this.watcherManager = watcherManager;
     this.eventService = eventService;
     this.pathMatcherRegistry = registryContainer.pathMatcherRegistry;
+    LOG.info("[init]: LanguageServerFileWatcher is initialized");
   }
 
   @PostConstruct
   protected void subscribe() {
     eventService.subscribe(this::onServerInitialized, LanguageServerInitializedEvent.class);
+    LOG.info("[subscribe]: LanguageServerFileWatcher is subscribed to listen LanguageServerInitializedEvent");
   }
 
   private void send(LanguageServer server, String filePath, FileChangeType changeType) {
+    logCallStack("[send]: reporting: ChgType: "
+  +changeType.name()+
+  ", File: "+filePath+", to server: "+ server.toString());
+
     DidChangeWatchedFilesParams params =
         new DidChangeWatchedFilesParams(
             Collections.singletonList(new FileEvent(prefixURI(filePath), changeType)));
@@ -72,13 +78,16 @@ class LanguageServerFileWatcher {
   @PreDestroy
   @VisibleForTesting
   void removeAllWatchers() {
-    for (Integer watcherId : watcherIds) {
+	    LOG.info("[removeAllWatchers]: removing all watchers");
+
+	  for (Integer watcherId : watcherIds) {
       watcherManager.unRegisterByMatcher(watcherId);
     }
   }
 
   private void onServerInitialized(LanguageServerInitializedEvent event) {
     LOG.debug("Registering file watching operations for language server : {}", event.getId());
+    logCallStack("Registering file watching operations for language server : " + event.getId());
 
     String id = event.getId();
     LanguageServer languageServer = event.getLanguageServer();
@@ -89,6 +98,8 @@ class LanguageServerFileWatcher {
     }
 
     for (PathMatcher pathMatcher : pathMatchers) {
+    	LOG.info("[onServerInitialized] registering handlers by matcher: {}",
+    			pathMatcher.getClass().getName());
       int watcherId =
           watcherManager.registerByMatcher(
               pathMatcher,
@@ -98,5 +109,15 @@ class LanguageServerFileWatcher {
 
       watcherIds.add(watcherId);
     }
+  }
+  
+  public static void logCallStack(String msg) {
+    Exception e = new Exception(msg);
+    StackTraceElement[] stElements = e.getStackTrace();
+    String result = msg + ":";
+    for (StackTraceElement ste : stElements) {
+      result += "\n\t" + ste.toString();
+    }
+    LOG.info(result);
   }
 }

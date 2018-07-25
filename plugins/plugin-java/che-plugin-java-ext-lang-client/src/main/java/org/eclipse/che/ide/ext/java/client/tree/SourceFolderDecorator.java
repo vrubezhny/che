@@ -48,7 +48,12 @@ public class SourceFolderDecorator implements NodeIconProvider {
 
   @Override
   public SVGResource getIcon(Resource resource) {
+    log("SourceFolderDecorator.getIcon(" + resource.getName() + "): start");
     if (resource.getResourceType() != FOLDER) {
+      log(
+          "SourceFolderDecorator.getIcon("
+              + resource.getName()
+              + "): done: null: (resource.getResourceType() != FOLDER)");
       return null;
     }
 
@@ -59,14 +64,28 @@ public class SourceFolderDecorator implements NodeIconProvider {
 
       switch (contentRoot) {
         case SOURCE:
+          log(
+              "SourceFolderDecorator.getIcon("
+                  + resource.getName()
+                  + "): done: javaResources.sourceFolder()");
           return javaResources.sourceFolder();
         case TEST_SOURCE:
+          log(
+              "SourceFolderDecorator.getIcon("
+                  + resource.getName()
+                  + "): done: javaResources.testFolder()");
           return javaResources.testFolder();
         default:
+          log("SourceFolderDecorator.getIcon(" + resource.getName() + "): done: null: default");
           return null;
       }
     }
 
+    log("SourceFolderDecorator.getIcon(" + resource.getName() + "): done: null");
     return null;
   }
+
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
 }

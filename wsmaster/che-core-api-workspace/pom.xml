@@ -249,6 +249,7 @@
                         <configuration>
                             <includes>
                                 <include>**/spi/tck/*.*</include>
+                                <include>**/spi/environment/*.*</include>
                             </includes>
                         </configuration>
                     </execution>

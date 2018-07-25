@@ -35,7 +35,7 @@ public class SourceFolderInterceptor implements ResourceInterceptor {
   @Override
   public final void intercept(Resource resource) {
     checkArgument(resource != null, "Null resource occurred");
-
+    log("SourceFolderInterceptor.intercept(" + resource.getLocation().toString() + "): start");
     if (resource.isFolder()) {
       final Optional<Project> project = resource.getRelatedProject();
 
@@ -45,12 +45,31 @@ public class SourceFolderInterceptor implements ResourceInterceptor {
         for (Path path : getPaths(project.get(), getAttribute())) {
           if (path.equals(resourcePath)) {
             resource.addMarker(new SourceFolderMarker(getContentRoot()));
+            log(
+                "SourceFolderInterceptor.intercept("
+                    + resource.getLocation().toString()
+                    + "): done: Added SourceFolderMarker");
             return;
+          } else {
+            log(
+                "SourceFolderInterceptor.intercept("
+                    + resource.getLocation().toString()
+                    + "): done: Added SourceFolderMarker");
           }
         }
+      } else {
+        log(
+            "SourceFolderInterceptor.intercept("
+                + resource.getLocation().toString()
+                + "): done: ~[(project.isPresent() && isJavaProject(project.get()))]");
       }
     }
+    log("SourceFolderInterceptor.intercept(" + resource.getLocation().toString() + "): done");
   }
+
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
 
   protected ContentRoot getContentRoot() {
     return SOURCE;
@@ -61,9 +80,16 @@ public class SourceFolderInterceptor implements ResourceInterceptor {
   }
 
   protected final Path[] getPaths(Project project, String srcType) {
+    log("SourceFolderInterceptor.getPaths(" + project.getName() + ", " + srcType + "): start");
     final List<String> srcFolders = project.getAttributes().get(srcType);
 
     if (srcFolders == null || srcFolders.isEmpty()) {
+      log(
+          "SourceFolderInterceptor.getPaths("
+              + project.getName()
+              + ", "
+              + srcType
+              + "): done: [new Path[0]]");
       return new Path[0];
     }
 
@@ -73,7 +99,29 @@ public class SourceFolderInterceptor implements ResourceInterceptor {
       final int index = paths.length;
       paths = Arrays.copyOf(paths, index + 1);
       paths[index] = project.getLocation().append(srcFolder);
+      log(
+          "SourceFolderInterceptor.getPaths("
+              + project.getName()
+              + ", "
+              + srcType
+              + "): added: "
+              + index
+              + ", path: "
+              + project.getLocation().append(srcFolder).toString());
     }
+
+    String msg = "Returning source folders paths: [";
+    for (Path p : paths) {
+      msg += "\n\t" + p.toString();
+    }
+    log(
+        "SourceFolderInterceptor.getPaths("
+            + project.getName()
+            + ", "
+            + srcType
+            + "): done: "
+            + msg
+            + "\n]");
 
     return paths;
   }

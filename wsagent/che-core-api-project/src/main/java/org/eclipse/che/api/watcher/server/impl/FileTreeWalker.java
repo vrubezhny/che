@@ -192,6 +192,9 @@ public class FileTreeWalker {
       Set<Consumer<Path>> createConsumer,
       Path path,
       BasicFileAttributes attrs) {
+	 logCallStack("[updateFsTreeAndAcceptConsumables] updating " 
+			 + (items == directories ? "DIRs" : "FILEs") 
+			 + ", Path: " + path.toString());
     Long lastModifiedActual = attrs.lastModifiedTime().toMillis();
 
     if (items.containsKey(path)) {
@@ -205,4 +208,14 @@ public class FileTreeWalker {
       createConsumer.forEach(it -> it.accept(path));
     }
   }
+  
+  public static void logCallStack(String msg) {
+	    Exception e = new Exception(msg);
+	    StackTraceElement[] stElements = e.getStackTrace();
+	    String result = msg + ":";
+	    for (StackTraceElement ste : stElements) {
+	      result += "\n\t" + ste.toString();
+	    }
+	    LOG.info(result);
+	  }
 }

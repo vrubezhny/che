@@ -242,4 +242,8 @@ class InMemoryResourceStore implements ResourceStore {
       interceptor.intercept(resource);
     }
   }
+
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
 }

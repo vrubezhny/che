@@ -153,6 +153,7 @@ public abstract class ResourceNode<R extends Resource> extends AbstractTreeNode
 
   @Override
   public void updatePresentation(@NotNull NodePresentation presentation) {
+    log("ResourceNode.updatePresentation(" + getName() + "): start");
     final StringBuilder cssBuilder = new StringBuilder();
 
     final Optional<Marker> presentableTextMarker = getData().getMarker(PresentableTextMarker.ID);
@@ -206,7 +207,12 @@ public abstract class ResourceNode<R extends Resource> extends AbstractTreeNode
         presentation.setPresentableTextCss("color: " + vcsStatus.getColor() + ";");
       }
     }
+    log("ResourceNode.updatePresentation(" + getName() + "): done");
   }
+
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
 
   @Override
   public String getName() {

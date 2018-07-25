@@ -22,6 +22,8 @@ import org.eclipse.che.ide.rest.AsyncRequestFactory;
 import org.eclipse.che.ide.ui.loaders.request.LoaderFactory;
 import org.eclipse.che.ide.ui.loaders.request.MessageLoader;
 import org.eclipse.che.jdt.ls.extension.api.dto.ClasspathEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The implementation of {@link ClasspathUpdaterServiceClient}.
@@ -30,6 +32,8 @@ import org.eclipse.che.jdt.ls.extension.api.dto.ClasspathEntry;
  */
 @Singleton
 public class ClasspathUpdaterServiceClientImpl implements ClasspathUpdaterServiceClient {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(ClasspathUpdaterServiceClientImpl.class);
 
   private final String pathToService;
   private final MessageLoader loader;
@@ -48,11 +52,15 @@ public class ClasspathUpdaterServiceClientImpl implements ClasspathUpdaterServic
 
   @Override
   public Promise<Void> setRawClasspath(String projectPath, List<ClasspathEntry> entries) {
+    LOG.info("[" + System.currentTimeMillis() + "] setRawClasspath({}): start", projectPath);
     final String url =
         appContext.getWsAgentServerApiEndpoint()
             + pathToService
             + "update?projectpath="
             + encodePath(valueOf(projectPath));
-    return asyncRequestFactory.createPostRequest(url, entries).loader(loader).send();
+    Promise<Void> promise =
+        asyncRequestFactory.createPostRequest(url, entries).loader(loader).send();
+    LOG.info("[" + System.currentTimeMillis() + "] setRawClasspath({}): done", projectPath);
+    return promise;
   }
 }

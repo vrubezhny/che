@@ -671,6 +671,15 @@ public final class ResourceManager {
 
   Promise<Resource[]> getRemoteResources(
       final Container container, final int depth, boolean includeFiles) {
+    logCallStack(
+        "ResourceManager.getRemoteResources("
+            + container.getLocation().toString()
+            + ","
+            + depth
+            + ","
+            + includeFiles
+            + "): invoked");
+
     checkArgument(depth > -2, "Invalid depth");
 
     if (depth == DEPTH_ZERO) {
@@ -794,12 +803,20 @@ public final class ResourceManager {
   }
 
   Promise<Optional<Container>> getContainer(final Path absolutePath) {
+	  log("ResourceManager.getContainer("+absolutePath+"): start");
     return findResource(absolutePath)
         .thenPromise(
             optResource -> {
+            	  log("ResourceManager.getContainer("+absolutePath+"): OPTIONAL resource found: " 
+              			  + (optResource.isPresent() ? "PRESENT" : "NOT PRESENT"));
+
               if (optResource.isPresent()) {
                 Resource resource = optResource.get();
+          	  log("ResourceManager.getContainer("+absolutePath+"): resource found: " + resource.getName() + " ==> "
+          			  + (resource instanceof Container ? "CONTAINER" : "NOT A CONTAINER"));
+               
                 checkState(resource instanceof Container, "Not a container");
+                
                 return promises.resolve(of((Container) resource));
               }
 
@@ -864,6 +881,13 @@ public final class ResourceManager {
   }
 
   Promise<Resource[]> childrenOf(final Container container, boolean forceUpdate) {
+//    logCallStack(
+//        ">> RecourceManager.childrenOf("
+//            + container
+//            + ","
+//            + String.valueOf(forceUpdate)
+//            + "): start");
+
     if (forceUpdate) {
       return getRemoteResources(container, DEPTH_ONE, true);
     }
@@ -907,6 +931,20 @@ public final class ResourceManager {
                       }
                     }));
   }
+
+  public static void logCallStack(String msg) {
+    Exception e = new Exception(msg);
+    StackTraceElement[] stElements = e.getStackTrace();
+    String result = msg + ":";
+    for (StackTraceElement ste : stElements) {
+      result += "\n\t" + ste.toString();
+    }
+    log(result);
+  }
+
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
 
   private Promise<Optional<Resource>> doFindResource(Path path) {
     return ps.getTree(path.parent(), 1, true)

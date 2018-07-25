@@ -36,18 +36,40 @@ public class SourceFolderNodeInterceptor implements ClasspathNodeInterceptor {
 
   @Override
   public Promise<List<Node>> intercept(Node parent, List<Node> children) {
+    log(
+        "SourceFolderNodeInterceptor.intercept("
+            + parent.getName()
+            + "): children total: "
+            + children.size()
+            + ": start");
     List<Node> nodes = new ArrayList<>();
 
     for (Node child : children) {
       if (child.isLeaf() || child instanceof PackageNode) {
         continue;
       }
+      log(
+          "SourceFolderNodeInterceptor.intercept("
+              + parent.getName()
+              + "): add child: "
+              + child.getName());
 
       nodes.add(child);
     }
+    log(
+        "SourceFolderNodeInterceptor.intercept("
+            + parent.getName()
+            + "): children total: "
+            + children.size()
+            + ": done: result children:"
+            + nodes.size());
 
     return Promises.resolve(nodes);
   }
+
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
 
   @Override
   public int getPriority() {

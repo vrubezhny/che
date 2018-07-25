@@ -340,6 +340,7 @@ public class ProjectServiceApi {
   /** Create folder under specified path */
   public Response createFolder(String wsPath)
       throws ConflictException, ForbiddenException, ServerException, NotFoundException {
+	LOG.info("createFolder(" + wsPath + "): start");
     wsPath = absolutize(wsPath);
     fsManager.createDir(wsPath);
 
@@ -357,9 +358,14 @@ public class ProjectServiceApi {
             .orElseThrow(() -> new NotFoundException("Can't find parent project"))
             .getPath();
 
+	LOG.info("createFolder(" + wsPath + "): about to report event: ProjectItemModifiedEvent(CREATED, project: "
+			+ project +", wsPath: " + wsPath + ", true");
     eventService.publish(
         new ProjectItemModifiedEvent(
             ProjectItemModifiedEvent.EventType.CREATED, project, wsPath, true));
+	LOG.info("createFolder(" + wsPath + "): event is reported: ProjectItemModifiedEvent(CREATED, project: "
+			+ project +", wsPath: " + wsPath + ", true");
+	LOG.info("createFolder(" + wsPath + "): done: about to send response");
 
     return Response.created(location)
         .entity(injectFolderLinks(fsDtoConverter.asDto(wsPath)))

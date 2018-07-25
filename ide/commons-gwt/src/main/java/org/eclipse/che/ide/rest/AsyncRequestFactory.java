@@ -190,6 +190,8 @@ public class AsyncRequestFactory {
       RequestBuilder.Method method, String url, Object dtoBody, boolean async) {
     Preconditions.checkNotNull(method, "Request method should not be a null");
 
+//    logCallStack(
+//        "AsyncRequestFactory.doCreateRequest(" + method.toString() + ", " + url + "): start");
     AsyncRequest asyncRequest = newAsyncRequest(method, url, async);
     if (dtoBody != null) {
       if (dtoBody instanceof List) {
@@ -213,8 +215,24 @@ public class AsyncRequestFactory {
 
       asyncRequest.header(HTTPHeader.CONTENT_TYPE, MimeType.WILDCARD);
     }
+//    logCallStack(
+//        "AsyncRequestFactory.doCreateRequest(" + method.toString() + ", " + url + "): done");
     return asyncRequest;
   }
+
+  public static void logCallStack(String msg) {
+    Exception e = new Exception(msg);
+    StackTraceElement[] stElements = e.getStackTrace();
+    String result = msg + ":";
+    for (StackTraceElement ste : stElements) {
+      result += "\n\t" + ste.toString();
+    }
+    log(result);
+  }
+
+  public static native void log(String message) /*-{
+  if (window.console && console.log) console.log(message);
+}-*/;
 
   /**
    * A factory method which creates a new instance of {@link AsyncRequest}.
