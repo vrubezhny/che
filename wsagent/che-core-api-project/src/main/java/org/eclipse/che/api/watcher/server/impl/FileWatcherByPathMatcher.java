@@ -57,33 +57,52 @@ public class FileWatcherByPathMatcher implements Consumer<Path> {
   @Override
   public void accept(Path path) {
     if (!exists(path)) {
+    	LOG.info("[accept] Reported path doesn't exist: {}", path.toString());
       if (pathWatchRegistrations.containsKey(path)) {
         pathWatchRegistrations.remove(path).forEach(watcher::unwatch);
       }
-      paths.values().forEach(it -> it.remove(path));
+      paths.values().forEach(it -> {
+      	LOG.info("[accept] Removing path: {} from '{}' [{}]", path.toString(),
+      			it, it.getClass().getName());
+        it.remove(path);
+      });
       paths.entrySet().removeIf(it -> it.getValue().isEmpty());
       return;
     }
 
     for (PathMatcher matcher : matchers.keySet()) {
+    	LOG.info("[accept] start: Reporting path {} to matcher '{}' [{}]", path.toString(),
+    			matcher, matcher.getClass().getName());
       if (matcher.matches(path)) {
         for (int operationId : matchers.get(matcher)) {
           paths.putIfAbsent(operationId, newConcurrentHashSet());
           if (paths.get(operationId).contains(path)) {
+          	LOG.info("[accept] Skipping path {} that is already reported to matcher '{}' [{}]", path.toString(),
+        			matcher, matcher.getClass().getName());
             return;
           }
 
           paths.get(operationId).add(path);
 
           Operation operation = operations.get(operationId);
+        	LOG.info("[accept] Start watching new path {} with operation {} for matcher '{}' [{}]", path.toString(),
+        			operationId, matcher, matcher.getClass().getName());
           int pathWatcherOperationId =
               watcher.watch(path, operation.create, operation.modify, operation.delete);
           pathWatchRegistrations.putIfAbsent(path, newConcurrentHashSet());
           pathWatchRegistrations.get(path).add(pathWatcherOperationId);
+      	LOG.info("[accept] Reporting new path {} with operation {} ('{}' [{}]) for matcher '{}' [{}]", path.toString(),
+    			operationId, operation.create, operation.create.getClass().getName(), matcher, matcher.getClass().getName());
+          
           operation.create.accept(pathTransformer.transform(path));
         }
+      } else {
+    	LOG.info("[accept] Path {} doesn't match matcher '{}' [{}]", path.toString(),
+    			matcher, matcher.getClass().getName());
+    	
       }
-    }
+  	  LOG.info("[accept] done: Reporting path to matchers: {}", path.toString());
+    } 
   }
 
   int watch(
@@ -92,6 +111,7 @@ public class FileWatcherByPathMatcher implements Consumer<Path> {
       Consumer<String> modify,
       Consumer<String> delete) {
     LOG.debug("Watching matcher '{}'", matcher);
+    logCallStack("Watching matcher '" + matcher + "' [" + matcher.getClass().getName() + "]");
     int operationId = operationIdCounter.getAndIncrement();
 
     matchers.putIfAbsent(matcher, newConcurrentHashSet());
@@ -100,11 +120,13 @@ public class FileWatcherByPathMatcher implements Consumer<Path> {
     operations.put(operationId, new Operation(create, modify, delete));
 
     LOG.debug("Registered matcher operation set with id '{}'", operationId);
+    LOG.info("Registered matcher operation set with id '{}'", operationId);
     return operationId;
   }
 
   void unwatch(int operationId) {
     LOG.debug("Unwatching matcher operation set with id '{}'", operationId);
+    logCallStack("UnWatching matcher  operation set with id '" + operationId + "'");
     for (Entry<PathMatcher, Set<Integer>> entry : matchers.entrySet()) {
       PathMatcher matcher = entry.getKey();
       Set<Integer> operationsIdList = entry.getValue();
@@ -145,4 +167,14 @@ public class FileWatcherByPathMatcher implements Consumer<Path> {
       this.delete = delete;
     }
   }
+  
+  public static void logCallStack(String msg) {
+	    Exception e = new Exception(msg);
+	    StackTraceElement[] stElements = e.getStackTrace();
+	    String result = msg + ":";
+	    for (StackTraceElement ste : stElements) {
+	      result += "\n\t" + ste.toString();
+	    }
+	    LOG.info(result);
+	  }
 }

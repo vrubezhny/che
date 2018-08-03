@@ -192,20 +192,28 @@ public class FileTreeWalker {
       Set<Consumer<Path>> createConsumer,
       Path path,
       BasicFileAttributes attrs) {
-	 logCallStack("[updateFsTreeAndAcceptConsumables] updating " 
-			 + (items == directories ? "DIRs" : "FILEs") 
-			 + ", Path: " + path.toString());
+//	 LOG.info("[updateFsTreeAndAcceptConsumables] updating " 
+//			 + (items == directories ? "DIRs" : "FILEs") 
+//			 + ", Path: " + path.toString());
     Long lastModifiedActual = attrs.lastModifiedTime().toMillis();
 
     if (items.containsKey(path)) {
       Long lastModifiedStored = items.get(path);
       if (!lastModifiedActual.equals(lastModifiedStored)) {
+          LOG.info("\"[updateFsTreeAndAcceptConsumables] reporting to updateConsumer: size: {}, path: {}", updateConsumer.size(),path.toString());
         items.put(path, lastModifiedActual);
-        updateConsumer.forEach(it -> it.accept(path));
+        updateConsumer.forEach(it -> {
+            LOG.info("\"[updateFsTreeAndAcceptConsumables] reporting to updateConsumer: {}, path: {}", it.getClass().getName(),path.toString());
+          it.accept(path);
+        });
       }
     } else {
       items.put(path, lastModifiedActual);
-      createConsumer.forEach(it -> it.accept(path));
+      LOG.info("\"[updateFsTreeAndAcceptConsumables] reporting to updateConsumer: size:  {}, path: {}", createConsumer.size(),path.toString());
+      createConsumer.forEach(it -> {
+          LOG.info("\"[updateFsTreeAndAcceptConsumables] reporting to createConsumer: {}, path: {}", it.getClass().getName(),path.toString());
+    	  it.accept(path);
+      });
     }
   }
   
