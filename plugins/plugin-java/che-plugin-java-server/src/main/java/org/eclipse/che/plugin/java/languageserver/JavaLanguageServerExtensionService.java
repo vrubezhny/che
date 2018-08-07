@@ -54,6 +54,7 @@ import static org.eclipse.che.jdt.ls.extension.api.Commands.GET_EXTERNAL_LIBRARI
 import static org.eclipse.che.jdt.ls.extension.api.Commands.GET_LIBRARY_CHILDREN_COMMAND;
 import static org.eclipse.che.jdt.ls.extension.api.Commands.GET_LIBRARY_ENTRY_COMMAND;
 import static org.eclipse.che.jdt.ls.extension.api.Commands.GET_OUTPUT_DIR_COMMAND;
+import static org.eclipse.che.jdt.ls.extension.api.Commands.GET_PROJECT_SOURCE_LOCATIONS_COMMAND;
 import static org.eclipse.che.jdt.ls.extension.api.Commands.GET_SOURCE_FOLDERS;
 import static org.eclipse.che.jdt.ls.extension.api.Commands.REIMPORT_MAVEN_PROJECTS_COMMAND;
 import static org.eclipse.che.jdt.ls.extension.api.Commands.RENAME_COMMAND;
@@ -454,6 +455,20 @@ public class JavaLanguageServerExtensionService {
     Type type = new TypeToken<ArrayList<String>>() {}.getType();
     List<String> result = doGetList(GET_SOURCE_FOLDERS, projectUri, type);
     return result.stream().map(LanguageServiceUtils::removePrefixUri).collect(Collectors.toList());
+  }
+
+  /**
+   * Gets all source folder locations of plain java project.
+   *
+   * @param projectPath project path
+   * @return source folder locations
+   */
+  public List<String> getAllSourceFoldersLocations(String projectPath) {
+    checkLanguageServerInitialized();
+
+    String projectUri = LanguageServiceUtils.prefixURI(projectPath);
+    Type type = new TypeToken<ArrayList<String>>() {}.getType();
+    return doGetList(GET_PROJECT_SOURCE_LOCATIONS_COMMAND, projectUri, type);
   }
 
   private void checkLanguageServerInitialized() {
@@ -987,8 +1002,11 @@ public class JavaLanguageServerExtensionService {
   private <T> List<T> doGetList(String command, List<Object> params, Type type) {
     CompletableFuture<Object> result = executeCommand(command, params);
     try {
-      return gson.fromJson(gson.toJson(result.get(TIMEOUT, TimeUnit.SECONDS)), type);
+      Object res = result.get(60, TimeUnit.SECONDS);
+      LOG.info("[doGetList] got the result object, converting to json");
+      return gson.fromJson(gson.toJson(res), type);
     } catch (JsonSyntaxException | InterruptedException | ExecutionException | TimeoutException e) {
+      LOG.error("[doGetList] Error getting the result object: " + e.getClass().getName(), e);
       throw new JsonRpcException(-27000, e.getMessage());
     }
   }
@@ -1015,8 +1033,12 @@ public class JavaLanguageServerExtensionService {
             (ServerCapabilities cap) -> {
               ExtendedLanguageServer ls = findInitializedLanguageServer();
               if (ls != null) {
-                return ls.getWorkspaceService().executeCommand(params);
+                LOG.info("[executeCommand] about to execute command: " + commandId);
+                CompletableFuture<Object> result = ls.getWorkspaceService().executeCommand(params);
+                LOG.info("[executeCommand] command executed: " + commandId);
+                return result;
               } else {
+                LOG.info("[executeCommand] language server not found for command: " + commandId);
                 CompletableFuture<Object> completedFuture = CompletableFuture.completedFuture(null);
                 completedFuture.completeExceptionally(
                     new LanguageServerException("did not find language server"));

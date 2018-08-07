@@ -16,16 +16,22 @@ import static org.eclipse.che.selenium.core.constant.TestProjectExplorerContextM
 import static org.eclipse.che.selenium.core.constant.TestProjectExplorerContextMenuConstants.SubMenuBuildPath.USE_AS_SOURCE_FOLDER;
 import static org.eclipse.che.selenium.pageobject.ProjectExplorer.FolderTypes.JAVA_SOURCE_FOLDER;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.eclipse.che.commons.lang.concurrent.LoggingUncaughtExceptionHandler;
 import org.eclipse.che.selenium.core.client.TestProjectServiceClient;
 import org.eclipse.che.selenium.core.constant.TestMenuCommandsConstants;
 import org.eclipse.che.selenium.core.constant.TestProjectExplorerContextMenuConstants;
 import org.eclipse.che.selenium.core.project.ProjectTemplates;
+import org.eclipse.che.selenium.core.utils.WaitUtils;
 import org.eclipse.che.selenium.core.workspace.TestWorkspace;
 import org.eclipse.che.selenium.pageobject.AskForValueDialog;
+import org.eclipse.che.selenium.pageobject.Consoles;
 import org.eclipse.che.selenium.pageobject.Ide;
 import org.eclipse.che.selenium.pageobject.Loader;
 import org.eclipse.che.selenium.pageobject.Menu;
@@ -57,6 +63,9 @@ public class MoveJavaFileInNewSourceFolderTest {
   @Inject private ToastLoader toastLoader;
   @Inject private NotificationsPopupPanel notificationsPopupPanel;
   @Inject private TestProjectServiceClient testProjectServiceClient;
+  @Inject private Consoles consoles;
+
+  private ExecutorService executorService;
 
   @BeforeClass
   public void prepare() throws Exception {
@@ -64,6 +73,14 @@ public class MoveJavaFileInNewSourceFolderTest {
     testProjectServiceClient.importProject(
         workspace.getId(), Paths.get(resource.toURI()), PROJECT_NAME, ProjectTemplates.PLAIN_JAVA);
     ide.open(workspace);
+    consoles.waitJDTLSProjectResolveFinishedMessage(PROJECT_NAME);
+    this.executorService =
+        Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder()
+                .setNameFormat("WorkspaceUpdater-%d")
+                .setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.getInstance())
+                .setDaemon(true)
+                .build());
   }
 
   @Test
@@ -81,7 +98,11 @@ public class MoveJavaFileInNewSourceFolderTest {
     projectExplorer.waitAndSelectItem(PATH_NEW_SOURCE_FOLDER);
     projectExplorer.openContextMenuByPathSelectedItem(PROJECT_NAME + "/test/" + NEW_SOURCE_FOLDER);
     projectExplorer.clickOnItemInContextMenu(BUILD_PATH);
-    projectExplorer.clickOnItemInContextMenu(USE_AS_SOURCE_FOLDER);
+//    executorService.submit(
+//        () -> {
+          projectExplorer.clickOnItemInContextMenu(USE_AS_SOURCE_FOLDER);
+//        });
+    WaitUtils.sleepQuietly(5);
     projectExplorer.waitDefinedTypeOfFolder(PATH_NEW_SOURCE_FOLDER, JAVA_SOURCE_FOLDER);
     projectExplorer.waitAndSelectItem(PATH_NEW_SOURCE_FOLDER);
     projectExplorer.openContextMenuByPathSelectedItem(PATH_NEW_SOURCE_FOLDER);
@@ -90,6 +111,10 @@ public class MoveJavaFileInNewSourceFolderTest {
     // move java file into new source folder
     projectExplorer.waitItem(PROJECT_NAME);
     projectExplorer.waitAndSelectItem(PATH_TO_FILE);
+
+    // As FileTreeWalker's period is 10 secs - wait for the folders to be finally reported to jdt.ls
+    WaitUtils.sleepQuietly(11);
+
     projectExplorer.launchRefactorMoveByKeyboard();
     refactor.waitMoveItemFormIsOpen();
     refactor.clickOnExpandIconTree(PROJECT_NAME);
